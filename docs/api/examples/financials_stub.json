@@ -1,0 +1,41 @@
+{
+  "company": { "ticker": "AAPL", "name": "(stub) Example Corp", "cik": null },
+  "filing": { "form": "10-K", "accession_number": null, "filed_date": null, "report_date": null },
+  "periods": [
+    { "key": "FY2023", "type": "FY", "start_date": "2022-09-25", "end_date": "2023-09-30", "fiscal_year": 2023, "fiscal_quarter": null },
+    { "key": "FY2022", "type": "FY", "start_date": "2021-09-26", "end_date": "2022-09-24", "fiscal_year": 2022, "fiscal_quarter": null }
+  ],
+  "statements": {
+    "income_statement": {
+      "statement_type": "income_statement",
+      "line_items": [
+        { "id": "revenue", "label": "Revenue", "unit": "USD", "values": [ { "period_key": "FY2023", "value": 383285000000 }, { "period_key": "FY2022", "value": 394328000000 } ] },
+        { "id": "net_income", "label": "Net income", "unit": "USD", "values": [ { "period_key": "FY2023", "value": 96995000000 }, { "period_key": "FY2022", "value": 99803000000 } ] }
+      ]
+    },
+    "balance_sheet": {
+      "statement_type": "balance_sheet",
+      "line_items": [
+        { "id": "cash_and_equivalents", "label": "Cash and cash equivalents", "unit": "USD", "values": [ { "period_key": "FY2023", "value": 29965000000 }, { "period_key": "FY2022", "value": 23646000000 } ] },
+        { "id": "total_assets", "label": "Total assets", "unit": "USD", "values": [ { "period_key": "FY2023", "value": 352583000000 }, { "period_key": "FY2022", "value": 352755000000 } ] }
+      ]
+    },
+    "cash_flow": {
+      "statement_type": "cash_flow",
+      "line_items": [
+        { "id": "net_cash_from_operations", "label": "Net cash provided by operating activities", "unit": "USD", "values": [ { "period_key": "FY2023", "value": 110543000000 }, { "period_key": "FY2022", "value": 122151000000 } ] },
+        { "id": "capital_expenditures", "label": "Capital expenditures", "unit": "USD", "values": [ { "period_key": "FY2023", "value": -10959000000 }, { "period_key": "FY2022", "value": -10708000000 } ] }
+      ]
+    }
+  },
+  "ratios": [
+    { "id": "net_margin", "label": "Net margin", "unit": "percent", "values": [ { "period_key": "FY2023", "value": 25.3 }, { "period_key": "FY2022", "value": 25.3 } ] }
+  ],
+  "charts": [
+    { "id": "revenue_series", "label": "Revenue", "unit": "USD", "points": [ { "period_key": "FY2022", "value": 394328000000 }, { "period_key": "FY2023", "value": 383285000000 } ] }
+  ],
+  "summaries": [
+    { "title": "Highlights (stub)", "bullets": [ "Revenue slightly decreased year over year.", "Net income remained roughly flat.", "Operating cash flow was strong but decreased from the prior year." ] }
+  ],
+  "notes": { "source": "stub data until SEC pipeline is implemented" }
+}
