@@ -22,7 +22,7 @@ export function FilingSelectionPageLayout({ children }: FilingSelectionPageLayou
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <TrendingUp className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Stockpiler</span>
+            <span className="text-xl font-bold tracking-tight">StockGPT</span>
           </div>
           <div className="text-sm text-muted-foreground">
             SEC Filing Analysis

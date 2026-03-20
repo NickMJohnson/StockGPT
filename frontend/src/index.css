@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Stockpiler Design System - Finance Dashboard Aesthetic */
+/* StockGPT Design System - Finance Dashboard Aesthetic */
 
 @layer base {
   :root {
@@ -39,7 +39,7 @@
 
     --radius: 0.75rem;
 
-    /* Stockpiler custom tokens */
+    /* StockGPT custom tokens */
     --positive: 152 69% 40%;
     --positive-foreground: 0 0% 100%;
     --negative: 0 84% 60%;
@@ -94,7 +94,7 @@
     --input: 217 33% 20%;
     --ring: 199 89% 48%;
 
-    /* Stockpiler custom tokens - dark */
+    /* StockGPT custom tokens - dark */
     --positive: 152 69% 45%;
     --positive-foreground: 222 47% 6%;
     --negative: 0 72% 55%;

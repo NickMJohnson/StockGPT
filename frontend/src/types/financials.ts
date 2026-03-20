@@ -1,4 +1,4 @@
-// Core financial data types for Stockpiler
+// Core financial data types for StockGPT
 
 export interface Statement {
   unit?: "USD" | "USDm" | "USDb";
