@@ -4,9 +4,10 @@
 
 **Live Demo:** [stock-gpt-five.vercel.app](https://stock-gpt-five.vercel.app)
 
----
 
-![StockGPT Demo](https://your-gif-placeholder.gif)
+
+
+![StockGPT Demo](---![StockGPT gif](https://github.com/user-attachments/assets/cf14d0da-3317-46eb-8a90-29906466aea7))
 
 ---
 
