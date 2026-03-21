@@ -5,9 +5,9 @@
 **Live Demo:** [stock-gpt-five.vercel.app](https://stock-gpt-five.vercel.app)
 
 
+![StockGPT Demo](https://github.com/user-attachments/assets/b5e27155-3fb7-418e-bc94-822c61f5b5e8)
 
 
-![StockGPT Demo](---![StockGPT gif](https://github.com/user-attachments/assets/cf14d0da-3317-46eb-8a90-29906466aea7))
 
 ---
 
