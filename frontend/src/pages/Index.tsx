@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+// API
+import { fetchFilings, fetchFinancials, sendChatMessage } from "@/lib/api";
+
 // Components
 import { FilingSelectionPageLayout } from "@/components/FilingSelectionPageLayout";
 import { TickerInputCard } from "@/components/TickerInputCard";
@@ -12,93 +15,97 @@ import { StatementTable } from "@/components/StatementTable";
 import { RatiosGrid } from "@/components/RatiosGrid";
 import { ChartsPanel } from "@/components/ChartsPanel";
 
-// Mock data
-import { mockFilings, mockReport, mockChatMessages } from "@/data/mockData";
-
 // Types
-import type { ChatMessage, Filing } from "@/types/financials";
+import type { ChatMessage, Filing, FinancialReport } from "@/types/financials";
 
 type AppView = "selection" | "report";
 type TabKey = "income" | "balance" | "cashflow" | "ratios";
 
 const Index = () => {
-  // App state
+  // Selection state
   const [view, setView] = useState<AppView>("selection");
   const [ticker, setTicker] = useState("");
   const [tickerLoading, setTickerLoading] = useState(false);
-  const [tickerError, setTickerError] = useState<string>();
+  const [tickerError, setTickerError] = useState<string | undefined>();
   const [filings, setFilings] = useState<Filing[]>([]);
   const [company, setCompany] = useState("");
   const [selectedFilingId, setSelectedFilingId] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
 
   // Report state
+  const [report, setReport] = useState<FinancialReport | null>(null);
+  const [selectedForm, setSelectedForm] = useState("10-K");
   const [activeTab, setActiveTab] = useState<TabKey>("income");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(mockChatMessages);
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
 
-  // Simulated ticker search
-  const handleSubmitTicker = () => {
+  // Fetch filings for a ticker
+  const handleSubmitTicker = async () => {
     if (!ticker.trim()) return;
-
     setTickerLoading(true);
     setTickerError(undefined);
-
-    // Simulate API call
-    setTimeout(() => {
-      if (ticker.toUpperCase() === "AAPL") {
-        setCompany("Apple Inc.");
-        setFilings(mockFilings);
-      } else if (ticker.toUpperCase() === "INVALID") {
-        setTickerError("Ticker not found. Please try another symbol.");
-        setFilings([]);
-      } else {
-        // Demo: show mock data for any ticker
-        setCompany(`${ticker.toUpperCase()} Corporation`);
-        setFilings(mockFilings);
-      }
+    setFilings([]);
+    setSelectedFilingId(null);
+    try {
+      const data = await fetchFilings(ticker.trim());
+      setCompany(data.company);
+      setFilings(data.filings);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Ticker not found.";
+      setTickerError(msg);
+    } finally {
       setTickerLoading(false);
-    }, 800);
+    }
   };
 
-  // Simulated report load
-  const handleLoadReport = () => {
+  // Load the selected filing report
+  const handleLoadReport = async () => {
     if (!selectedFilingId) return;
+    const selectedFiling = filings.find((f) => f.filing_id === selectedFilingId);
+    if (!selectedFiling) return;
 
     setReportLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setReportLoading(false);
+    setTickerError(undefined);
+    try {
+      const data = await fetchFinancials(ticker.trim(), selectedFiling.form);
+      setReport(data);
+      setSelectedForm(selectedFiling.form);
+      setChatMessages([]); // clear chat on new report
       setView("report");
-    }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load report.";
+      setTickerError(msg);
+    } finally {
+      setReportLoading(false);
+    }
   };
 
-  // Chat handler
-  const handleChatSend = (message: string) => {
+  // Send a chat message
+  const handleChatSend = async (message: string) => {
     setChatMessages((prev) => [...prev, { role: "user", content: message }]);
     setChatLoading(true);
-
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const { answer } = await sendChatMessage(message, ticker.trim(), selectedForm);
+      setChatMessages((prev) => [...prev, { role: "assistant", content: answer }]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Chat error.";
       setChatMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: `I've analyzed the ${mockReport.period} filing for ${mockReport.company}. Based on the financial statements, here's my response to your question about "${message}":\n\nThe data shows strong fundamentals with some areas to monitor. Would you like me to elaborate on any specific aspect?`,
-        },
+        { role: "assistant", content: `Error: ${msg}` },
       ]);
+    } finally {
       setChatLoading(false);
-    }, 1500);
+    }
   };
 
-  // Back to selection
   const handleChangeFilingClick = () => {
     setView("selection");
     setActiveTab("income");
   };
 
-  // Render selection view
+  // ── Selection view ──────────────────────────────────────────────────────
   if (view === "selection") {
     return (
       <FilingSelectionPageLayout>
@@ -125,16 +132,18 @@ const Index = () => {
     );
   }
 
-  // Render report view
+  // ── Report view ─────────────────────────────────────────────────────────
+  if (!report) return null;
+
   const selectedFiling = filings.find((f) => f.filing_id === selectedFilingId);
 
   return (
     <ReportPageLayout
       header={
         <ReportHeader
-          company={mockReport.company}
-          ticker={mockReport.ticker}
-          period={mockReport.period}
+          company={report.company}
+          ticker={report.ticker}
+          period={report.period}
           form={selectedFiling?.form}
           sourceUrl={selectedFiling?.source_url}
           onChangeFilingClick={handleChangeFilingClick}
@@ -145,35 +154,35 @@ const Index = () => {
       chatLoading={chatLoading}
     >
       <div className="space-y-8">
-        {/* Summary */}
-        <SummaryCard summary={mockReport.summary} />
+        {/* AI Summary */}
+        <SummaryCard summary={report.summary} />
 
-        {/* Charts */}
-        <ChartsPanel series={mockReport.series} />
+        {/* Trend charts */}
+        <ChartsPanel series={report.series} />
 
-        {/* Tabs with statements */}
+        {/* Statement tabs */}
         <ReportTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
           incomeContent={
             <StatementTable
               title="Income Statement"
-              statement={mockReport.statements.income_statement}
+              statement={report.statements.income_statement}
             />
           }
           balanceContent={
             <StatementTable
               title="Balance Sheet"
-              statement={mockReport.statements.balance_sheet}
+              statement={report.statements.balance_sheet}
             />
           }
           cashflowContent={
             <StatementTable
               title="Cash Flow Statement"
-              statement={mockReport.statements.cash_flow}
+              statement={report.statements.cash_flow}
             />
           }
-          ratiosContent={<RatiosGrid ratios={mockReport.ratios} />}
+          ratiosContent={<RatiosGrid ratios={report.ratios} />}
         />
       </div>
     </ReportPageLayout>
