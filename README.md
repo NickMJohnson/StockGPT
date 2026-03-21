@@ -2,7 +2,7 @@
 
 > AI-powered financial analysis from real SEC filings — search any public company, get instant statements, ratios, charts, and an AI analyst you can chat with.
 
-**Live Demo:** [your-link-here.com](https://your-link-here.com)
+**Live Demo:** [stock-gpt-five.vercel.app](https://stock-gpt-five.vercel.app)
 
 ---
 
