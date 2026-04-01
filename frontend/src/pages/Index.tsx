@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 // API
-import { fetchFilings, fetchFinancials, sendChatMessage } from "@/lib/api";
+import { fetchFilings, fetchFinancials, sendChatMessage, sendLabMessage } from "@/lib/api";
 
 // Components
 import { FilingSelectionPageLayout } from "@/components/FilingSelectionPageLayout";
@@ -17,9 +17,10 @@ import { ReportTabs } from "@/components/ReportTabs";
 import { StatementTable } from "@/components/StatementTable";
 import { RatiosGrid } from "@/components/RatiosGrid";
 import { ChartsPanel } from "@/components/ChartsPanel";
+import { LabPanel } from "@/components/LabPanel";
 
 // Types
-import type { ChatMessage, Filing, FinancialReport } from "@/types/financials";
+import type { ChatMessage, Filing, FinancialReport, LabMessage } from "@/types/financials";
 
 const LOADING_STEPS = [
   "Fetching SEC filing...",
@@ -29,7 +30,7 @@ const LOADING_STEPS = [
 ];
 
 type AppView = "selection" | "report";
-type TabKey = "income" | "balance" | "cashflow" | "ratios";
+type TabKey = "income" | "balance" | "cashflow" | "ratios" | "lab";
 
 const Index = () => {
   // Selection state
@@ -52,6 +53,10 @@ const Index = () => {
   // Chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Lab state
+  const [labMessages, setLabMessages] = useState<LabMessage[]>([]);
+  const [labLoading, setLabLoading] = useState(false);
 
   // Fetch filings for a ticker
   const handleSubmitTicker = async () => {
@@ -91,6 +96,7 @@ const Index = () => {
       setReport(data);
       setSelectedForm(selectedFiling.form);
       setChatMessages([]); // clear chat on new report
+      setLabMessages([]);  // clear lab on new report
       setView("report");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load report.";
@@ -116,6 +122,23 @@ const Index = () => {
       ]);
     } finally {
       setChatLoading(false);
+    }
+  };
+
+  // Send a lab request
+  const handleLabSend = async (question: string) => {
+    setLabLoading(true);
+    try {
+      const response = await sendLabMessage(question, ticker.trim(), selectedForm);
+      setLabMessages((prev) => [...prev, { question, response }]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Lab error.";
+      setLabMessages((prev) => [
+        ...prev,
+        { question, response: { explanation: `Error: ${msg}` } },
+      ]);
+    } finally {
+      setLabLoading(false);
     }
   };
 
@@ -234,6 +257,13 @@ const Index = () => {
             />
           }
           ratiosContent={<RatiosGrid ratios={report.ratios} />}
+          labContent={
+            <LabPanel
+              messages={labMessages}
+              loading={labLoading}
+              onSend={handleLabSend}
+            />
+          }
         />
       </div>
     </ReportPageLayout>
