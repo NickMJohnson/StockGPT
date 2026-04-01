@@ -5,6 +5,7 @@ from backend.src.services.build_response import build_financials_response
 from backend.src.sec.filings import get_filings_list
 from backend.src.ai.summarize import summarize_financials
 from backend.src.chat.qa import answer_question
+from backend.src.chat.lab import compute_lab
 
 router = APIRouter()
 
@@ -103,3 +104,41 @@ def chat(payload: dict):
     )
 
     return {"answer": answer}
+
+
+@router.post("/lab")
+def lab(payload: dict):
+    question = payload.get("question", "")
+    ticker = payload.get("ticker", "").upper()
+    form = payload.get("form", "10-K").upper()
+
+    cache_key = f"{ticker}:{form}"
+    ctx = _context_cache.get(cache_key)
+
+    if not ctx and ticker:
+        try:
+            extracted = extract_financials(ticker, form)
+            temp = build_financials_response(extracted)
+            ctx = {
+                "company": extracted["company"],
+                "period": temp["period"],
+                "ratios": extracted["ratios"],
+                "statements": temp["statements"],
+                "summary": "",
+            }
+        except Exception:
+            ctx = None
+
+    if not ctx:
+        return {
+            "explanation": "No financial data loaded. Please search for a ticker first."
+        }
+
+    return compute_lab(
+        question=question,
+        company=ctx["company"],
+        period=ctx["period"],
+        ratios=ctx["ratios"],
+        statements=ctx["statements"],
+        summary=ctx.get("summary", ""),
+    )
