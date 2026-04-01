@@ -82,6 +82,12 @@ def compute_lab(
         )
 
         raw = response.content[0].text.strip()
+        # Claude sometimes wraps JSON in markdown fences despite instructions.
+        # Extract the outermost JSON object robustly.
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start != -1 and end != -1:
+            raw = raw[start : end + 1]
         result = json.loads(raw)
         # Ensure explanation is always present
         if "explanation" not in result:
