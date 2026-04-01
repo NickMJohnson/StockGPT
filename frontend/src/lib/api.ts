@@ -1,4 +1,4 @@
-import type { FinancialReport, FilingsResponse } from "@/types/financials";
+import type { FinancialReport, FilingsResponse, LabResponse } from "@/types/financials";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
 
@@ -36,4 +36,17 @@ export async function sendChatMessage(
     body: JSON.stringify({ question, ticker, form }),
   });
   return handleResponse<{ answer: string }>(res);
+}
+
+export async function sendLabMessage(
+  question: string,
+  ticker: string,
+  form: string,
+): Promise<LabResponse> {
+  const res = await fetch(`${BASE_URL}/api/lab`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, ticker, form }),
+  });
+  return handleResponse<LabResponse>(res);
 }

@@ -39,3 +39,38 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+// AI Lab types
+export interface LabRatio {
+  label: string;
+  value: number;
+  description?: string;
+  is_percent?: boolean;
+}
+
+export interface LabChartPoint {
+  period: string;
+  value: number;
+}
+
+export interface LabChartSeries {
+  name: string;
+  is_percent?: boolean;
+  data: LabChartPoint[];
+}
+
+export interface LabChart {
+  title: string;
+  series: LabChartSeries[];
+}
+
+export interface LabResponse {
+  explanation: string;
+  ratios?: LabRatio[];
+  chart?: LabChart;
+}
+
+export interface LabMessage {
+  question: string;
+  response: LabResponse;
+}
