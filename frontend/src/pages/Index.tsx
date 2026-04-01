@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // API
 import { fetchFilings, fetchFinancials, sendChatMessage } from "@/lib/api";
@@ -18,6 +21,13 @@ import { ChartsPanel } from "@/components/ChartsPanel";
 // Types
 import type { ChatMessage, Filing, FinancialReport } from "@/types/financials";
 
+const LOADING_STEPS = [
+  "Fetching SEC filing...",
+  "Extracting financial statements...",
+  "Computing ratios...",
+  "Generating AI summary...",
+];
+
 type AppView = "selection" | "report";
 type TabKey = "income" | "balance" | "cashflow" | "ratios";
 
@@ -31,6 +41,8 @@ const Index = () => {
   const [company, setCompany] = useState("");
   const [selectedFilingId, setSelectedFilingId] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | undefined>();
+  const [loadingStep, setLoadingStep] = useState(0);
 
   // Report state
   const [report, setReport] = useState<FinancialReport | null>(null);
@@ -67,7 +79,13 @@ const Index = () => {
     if (!selectedFiling) return;
 
     setReportLoading(true);
-    setTickerError(undefined);
+    setReportError(undefined);
+    setLoadingStep(0);
+
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
+    }, 2500);
+
     try {
       const data = await fetchFinancials(ticker.trim(), selectedFiling.form);
       setReport(data);
@@ -76,8 +94,9 @@ const Index = () => {
       setView("report");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load report.";
-      setTickerError(msg);
+      setReportError(msg);
     } finally {
+      clearInterval(stepInterval);
       setReportLoading(false);
     }
   };
@@ -117,7 +136,39 @@ const Index = () => {
           error={tickerError}
         />
 
-        {filings.length > 0 && (
+        {reportLoading && (
+          <Card className="glass-card w-full max-w-md animate-fade-in">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-base font-medium text-foreground">
+                {LOADING_STEPS[loadingStep]}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                First load may take 5–10 seconds
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!reportLoading && reportError && (
+          <Card className="glass-card w-full max-w-md animate-fade-in border-destructive/50">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">Failed to load report</p>
+                <p className="text-sm text-muted-foreground">{reportError}</p>
+              </div>
+              <Button variant="outline" onClick={handleLoadReport} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!reportLoading && !reportError && filings.length > 0 && (
           <FilingsPickerCard
             company={company}
             ticker={ticker.toUpperCase()}
@@ -125,7 +176,7 @@ const Index = () => {
             selectedFilingId={selectedFilingId}
             onSelectFiling={setSelectedFilingId}
             onLoadReport={handleLoadReport}
-            loading={reportLoading}
+            loading={false}
           />
         )}
       </FilingSelectionPageLayout>
