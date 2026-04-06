@@ -70,7 +70,18 @@ export interface LabResponse {
   chart?: LabChart;
 }
 
-export interface LabMessage {
-  question: string;
-  response: LabResponse;
-}
+export type LabTile =
+  | {
+      id: string;
+      type: "ratio";
+      label: string;
+      value: number;
+      description?: string;
+      is_percent?: boolean;
+    }
+  | {
+      id: string;
+      type: "chart";
+      title: string;
+      series: LabChartSeries[];
+    };

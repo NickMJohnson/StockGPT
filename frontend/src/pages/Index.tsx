@@ -20,7 +20,7 @@ import { ChartsPanel } from "@/components/ChartsPanel";
 import { LabPanel } from "@/components/LabPanel";
 
 // Types
-import type { ChatMessage, Filing, FinancialReport, LabMessage } from "@/types/financials";
+import type { ChatMessage, Filing, FinancialReport, LabTile } from "@/types/financials";
 
 const LOADING_STEPS = [
   "Fetching SEC filing...",
@@ -55,8 +55,9 @@ const Index = () => {
   const [chatLoading, setChatLoading] = useState(false);
 
   // Lab state
-  const [labMessages, setLabMessages] = useState<LabMessage[]>([]);
+  const [labTiles, setLabTiles] = useState<LabTile[]>([]);
   const [labLoading, setLabLoading] = useState(false);
+  const [lastExplanation, setLastExplanation] = useState<string | undefined>();
 
   // Fetch filings for a ticker
   const handleSubmitTicker = async () => {
@@ -95,8 +96,9 @@ const Index = () => {
       const data = await fetchFinancials(ticker.trim(), selectedFiling.form);
       setReport(data);
       setSelectedForm(selectedFiling.form);
-      setChatMessages([]); // clear chat on new report
-      setLabMessages([]);  // clear lab on new report
+      setChatMessages([]);    // clear chat on new report
+      setLabTiles([]);        // clear lab tiles on new report
+      setLastExplanation(undefined);
       setView("report");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load report.";
@@ -125,21 +127,37 @@ const Index = () => {
     }
   };
 
-  // Send a lab request
+  // Send a lab request — convert response into individual deletable tiles
   const handleLabSend = async (question: string) => {
     setLabLoading(true);
     try {
       const response = await sendLabMessage(question, ticker.trim(), selectedForm);
-      setLabMessages((prev) => [...prev, { question, response }]);
+      setLastExplanation(response.explanation);
+      const newTiles: LabTile[] = [];
+      response.ratios?.forEach((r) => {
+        newTiles.push({ id: crypto.randomUUID(), type: "ratio", ...r });
+      });
+      if (response.chart) {
+        newTiles.push({
+          id: crypto.randomUUID(),
+          type: "chart",
+          title: response.chart.title,
+          series: response.chart.series,
+        });
+      }
+      if (newTiles.length > 0) {
+        setLabTiles((prev) => [...prev, ...newTiles]);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Lab error.";
-      setLabMessages((prev) => [
-        ...prev,
-        { question, response: { explanation: `Error: ${msg}` } },
-      ]);
+      setLastExplanation(`Error: ${msg}`);
     } finally {
       setLabLoading(false);
     }
+  };
+
+  const handleDeleteTile = (id: string) => {
+    setLabTiles((prev) => prev.filter((t) => t.id !== id));
   };
 
   const handleChangeFilingClick = () => {
@@ -259,9 +277,11 @@ const Index = () => {
           ratiosContent={<RatiosGrid ratios={report.ratios} />}
           labContent={
             <LabPanel
-              messages={labMessages}
+              tiles={labTiles}
               loading={labLoading}
+              lastExplanation={lastExplanation}
               onSend={handleLabSend}
+              onDeleteTile={handleDeleteTile}
             />
           }
         />

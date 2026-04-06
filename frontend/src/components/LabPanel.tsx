@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -10,14 +10,13 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { Sparkles, Send, Loader2, FlaskConical } from "lucide-react";
+import { FlaskConical, Send, Loader2, X, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import type { LabMessage, LabResponse, LabChartPoint } from "@/types/financials";
+import type { LabTile, LabChartPoint, LabChartSeries } from "@/types/financials";
 
-// Palette of CSS chart colours matching the existing design
 const SERIES_COLORS = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
@@ -27,65 +26,71 @@ const SERIES_COLORS = [
 ];
 
 const EXAMPLE_PROMPTS = [
-  "Chart gross profit vs operating income over time",
-  "Compute interest coverage ratio",
-  "Show operating expenses as % of revenue by year",
   "Chart revenue growth rate year over year",
+  "Compute interest coverage ratio",
+  "Chart gross margin vs net margin over time",
+  "Show operating expenses as % of revenue",
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function mergeChartData(
-  series: { name: string; data: LabChartPoint[] }[],
+  series: LabChartSeries[],
 ): Record<string, number | string>[] {
   const periodSet = new Set<string>();
-  series.forEach((s) => s.data.forEach((d) => periodSet.add(d.period)));
+  series.forEach((s) => s.data.forEach((d: LabChartPoint) => periodSet.add(d.period)));
   const periods = Array.from(periodSet).sort();
-
   return periods.map((period) => {
     const row: Record<string, number | string> = { period };
     series.forEach((s) => {
-      const point = s.data.find((d) => d.period === period);
+      const point = s.data.find((d: LabChartPoint) => d.period === period);
       if (point !== undefined) row[s.name] = point.value;
     });
     return row;
   });
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Tile components ───────────────────────────────────────────────────────────
 
-function LabRatioCard({
-  label,
-  value,
-  description,
-  is_percent,
+function RatioTile({
+  tile,
+  onDelete,
 }: {
-  label: string;
-  value: number;
-  description?: string;
-  is_percent?: boolean;
+  tile: Extract<LabTile, { type: "ratio" }>;
+  onDelete: (id: string) => void;
 }) {
-  const display = is_percent
-    ? `${value.toFixed(1)}%`
-    : Math.abs(value) >= 1
-    ? value.toFixed(2)
-    : value.toFixed(4);
+  const display = tile.is_percent
+    ? `${tile.value.toFixed(1)}%`
+    : Math.abs(tile.value) >= 1
+    ? tile.value.toFixed(2)
+    : tile.value.toFixed(4);
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card/60 p-4 space-y-1">
-      <p className="text-xs text-muted-foreground font-medium">{label}</p>
+    <div className="group relative rounded-xl border border-border/50 bg-card/60 p-4 space-y-1 hover:border-border transition-colors">
+      <button
+        onClick={() => onDelete(tile.id)}
+        className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full opacity-0 group-hover:opacity-100 bg-muted hover:bg-destructive hover:text-destructive-foreground transition-all"
+        aria-label="Remove tile"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+      <p className="text-xs text-muted-foreground font-medium pr-6">{tile.label}</p>
       <p className="text-2xl font-semibold font-mono text-foreground">{display}</p>
-      {description && (
-        <p className="text-xs text-muted-foreground leading-snug">{description}</p>
+      {tile.description && (
+        <p className="text-xs text-muted-foreground leading-snug">{tile.description}</p>
       )}
     </div>
   );
 }
 
-function LabChartCard({ chart }: { chart: LabResponse["chart"] }) {
-  if (!chart) return null;
-
-  const { title, series } = chart;
+function ChartTile({
+  tile,
+  onDelete,
+}: {
+  tile: Extract<LabTile, { type: "chart" }>;
+  onDelete: (id: string) => void;
+}) {
+  const { title, series } = tile;
   const isPercent = series[0]?.is_percent ?? false;
   const chartData = mergeChartData(series);
   const isMulti = series.length > 1;
@@ -96,12 +101,16 @@ function LabChartCard({ chart }: { chart: LabResponse["chart"] }) {
   ];
 
   return (
-    <Card className="glass-card mt-3">
+    <Card className="col-span-full glass-card group relative">
+      <button
+        onClick={() => onDelete(tile.id)}
+        className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full opacity-0 group-hover:opacity-100 bg-muted hover:bg-destructive hover:text-destructive-foreground transition-all z-10"
+        aria-label="Remove tile"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          {title}
-        </CardTitle>
+        <CardTitle className="text-sm pr-8">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-52">
@@ -146,7 +155,7 @@ function LabChartCard({ chart }: { chart: LabResponse["chart"] }) {
             ) : (
               <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="lab-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={`lab-grad-${tile.id}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={SERIES_COLORS[0]} stopOpacity={0.3} />
                     <stop offset="95%" stopColor={SERIES_COLORS[0]} stopOpacity={0} />
                   </linearGradient>
@@ -180,13 +189,12 @@ function LabChartCard({ chart }: { chart: LabResponse["chart"] }) {
                   dataKey={series[0].name}
                   stroke={SERIES_COLORS[0]}
                   strokeWidth={2}
-                  fill="url(#lab-gradient)"
+                  fill={`url(#lab-grad-${tile.id})`}
                 />
               </AreaChart>
             )}
           </ResponsiveContainer>
         </div>
-        {/* Legend for multi-series */}
         {isMulti && (
           <div className="flex flex-wrap gap-3 mt-3">
             {series.map((s, i) => (
@@ -205,50 +213,18 @@ function LabChartCard({ chart }: { chart: LabResponse["chart"] }) {
   );
 }
 
-function LabResultCard({ message }: { message: LabMessage }) {
-  const { question, response } = message;
-  return (
-    <div className="space-y-3 animate-fade-in">
-      {/* User question */}
-      <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
-          {question}
-        </div>
-      </div>
-
-      {/* AI response card */}
-      <div className="rounded-2xl rounded-tl-sm border border-border/50 bg-card/60 px-4 py-3 space-y-3">
-        <p className="text-sm text-foreground leading-relaxed">{response.explanation}</p>
-
-        {response.ratios && response.ratios.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {response.ratios.map((r) => (
-              <LabRatioCard key={r.label} {...r} />
-            ))}
-          </div>
-        )}
-
-        {response.chart && <LabChartCard chart={response.chart} />}
-      </div>
-    </div>
-  );
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface LabPanelProps {
-  messages: LabMessage[];
+  tiles: LabTile[];
   loading: boolean;
+  lastExplanation?: string;
   onSend: (question: string) => void;
+  onDeleteTile: (id: string) => void;
 }
 
-export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
+export function LabPanel({ tiles, loading, lastExplanation, onSend, onDeleteTile }: LabPanelProps) {
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
 
   const handleSend = () => {
     const q = input.trim();
@@ -267,7 +243,7 @@ export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Empty state */}
-      {messages.length === 0 && !loading && (
+      {tiles.length === 0 && !loading && (
         <Card className="glass-card">
           <CardContent className="py-10 flex flex-col items-center gap-5 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -276,7 +252,7 @@ export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
             <div className="space-y-1.5">
               <p className="text-base font-semibold text-foreground">AI Lab</p>
               <p className="text-sm text-muted-foreground max-w-xs">
-                Ask me to compute any financial metric or plot a custom chart from this filing's data.
+                Ask for any metric or chart. Results appear as tiles you can keep or remove.
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
@@ -294,16 +270,20 @@ export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
         </Card>
       )}
 
-      {/* Conversation history */}
-      {messages.length > 0 && (
-        <div className="space-y-6">
-          {messages.map((m, i) => (
-            <LabResultCard key={i} message={m} />
-          ))}
+      {/* Tile grid */}
+      {tiles.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {tiles.map((tile) =>
+            tile.type === "ratio" ? (
+              <RatioTile key={tile.id} tile={tile} onDelete={onDeleteTile} />
+            ) : (
+              <ChartTile key={tile.id} tile={tile} onDelete={onDeleteTile} />
+            )
+          )}
         </div>
       )}
 
-      {/* Loading state */}
+      {/* Loading indicator */}
       {loading && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground animate-fade-in">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -311,9 +291,15 @@ export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
         </div>
       )}
 
-      <div ref={bottomRef} />
+      {/* Last explanation */}
+      {lastExplanation && !loading && (
+        <div className="flex items-start gap-2 rounded-lg bg-muted/40 px-4 py-3 text-sm text-muted-foreground animate-fade-in">
+          <Info className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+          <span>{lastExplanation}</span>
+        </div>
+      )}
 
-      {/* Input row */}
+      {/* Input */}
       <div className="sticky bottom-0 pt-2 pb-1">
         <div className="flex gap-2 rounded-xl border border-border/60 bg-background/80 backdrop-blur-sm p-1.5">
           <Input
@@ -335,12 +321,12 @@ export function LabPanel({ messages, loading, onSend }: LabPanelProps) {
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                <span className="hidden sm:inline">Run</span>
+                <span className="hidden sm:inline">Add</span>
               </>
             )}
           </Button>
         </div>
-        {messages.length > 0 && (
+        {tiles.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {EXAMPLE_PROMPTS.slice(0, 2).map((p) => (
               <Badge
