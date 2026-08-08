@@ -1,0 +1,22 @@
+{
+  "name": "stockgpt-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion demo video for StockGPT",
+  "scripts": {
+    "render": "remotion render src/index.ts StockGPTDemo out/stockgpt-demo.mp4",
+    "studio": "remotion studio src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.490",
+    "@remotion/transitions": "^4.0.490",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.490"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "^5.9.3"
+  }
+}

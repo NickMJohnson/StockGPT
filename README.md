@@ -1,13 +1,23 @@
 # StockGPT
 
-> AI-powered financial analysis from real SEC filings — search any public company, get instant statements, ratios, charts, and an AI analyst you can chat with.
+> AI-powered financial analysis from real SEC filings: search any public company, get instant statements, ratios, charts, and an AI analyst you can chat with.
 
 **Live Demo:** [stock-gpt-five.vercel.app](https://stock-gpt-five.vercel.app)
 
 
 ![StockGPT Demo](https://github.com/user-attachments/assets/b5e27155-3fb7-418e-bc94-822c61f5b5e8)
 
+---
 
+## Demo Video
+
+A 38-second walkthrough of the full flow: ticker search, filing selection, AI summary, trend charts, statements, ratios, the AI Lab, and chat.
+
+https://github.com/user-attachments/assets/3b969d5a-e9dd-46a3-8451-aba8f8513694
+
+Every screen in the video is the real app running against Apple's FY2025 10-K with live SEC EDGAR data and Claude responses 
+
+<sub>Also available as a file: [`demo/stockgpt-demo.mp4`](demo/stockgpt-demo.mp4) (1920×1080, ~7.7 MB)</sub>
 
 ---
 
@@ -15,13 +25,13 @@
 
 Enter any stock ticker and select a filing (10-K annual or 10-Q quarterly). StockGPT pulls the real SEC filing, extracts structured financial data, and gives you:
 
-- **Income Statement, Balance Sheet, Cash Flow** — pulled from SEC EDGAR, displayed as clean tables with multi-year columns
-- **12+ Financial Ratios** — margins, liquidity, leverage, returns, and growth rates computed automatically
-- **Trend Charts** — interactive area charts for revenue, free cash flow, and net margin over time
-- **AI Summary** — Claude writes a concise analyst-style summary of the filing's key highlights and risks
+- **Income Statement, Balance Sheet, Cash Flow** pulled from SEC EDGAR, displayed as clean tables with multi-year columns
+- **12+ Financial Ratios**  margins, liquidity, leverage, returns, and growth rates computed automatically
+- **Trend Charts**  interactive area charts for revenue, free cash flow, and net margin over time
+- **AI Summary**  Claude writes a concise analyst-style summary of the filing's key highlights and risks
 - **Chat** — ask the AI anything about the filing: *"Why did margins compress?"*, *"Is this company overleveraged?"*, *"How does cash flow compare to net income?"*
 
-All data is live from the SEC — not scraped, not mocked.
+All data is live from the SEC 
 
 ---
 
