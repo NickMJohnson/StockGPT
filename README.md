@@ -4,9 +4,6 @@
 
 **Live Demo:** [stock-gpt-five.vercel.app](https://stock-gpt-five.vercel.app)
 
-
-![StockGPT Demo](https://github.com/user-attachments/assets/b5e27155-3fb7-418e-bc94-822c61f5b5e8)
-
 ---
 
 ## Demo Video
@@ -161,6 +158,14 @@ StockGPT/
 ├── .env.example                     # Environment variable template
 └── README.md
 ```
+
+---
+
+## Clickthrough
+
+The original animated walkthrough of the app:
+
+![StockGPT Demo](https://github.com/user-attachments/assets/b5e27155-3fb7-418e-bc94-822c61f5b5e8)
 
 ---
 
